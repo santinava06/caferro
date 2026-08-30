@@ -14,6 +14,7 @@ function App() {
   const [attendance, setAttendance] = useState('')
   const [guests, setGuests] = useState([''])
   const [modalOpen, setModalOpen] = useState(false)
+  const [declineOpen, setDeclineOpen] = useState(false)
   const [musicOn, setMusicOn] = useState(true)
   const [celebrating, setCelebrating] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -25,13 +26,18 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, attendance, guests: guests.filter((guest) => guest.trim()) }),
       })
-      if (!response.ok) throw new Error('No se pudo guardar la respuesta')
+      if (response.status === 409) throw new Error('duplicate-name')
+      if (!response.ok) throw new Error('save-error')
       setConfirmed(true)
-      setModalOpen(true)
-      setCelebrating(true)
-      window.setTimeout(() => setCelebrating(false), 3600)
-    } catch {
-      window.alert('No pudimos guardar tu respuesta. Probá nuevamente.')
+      if (attendance === 'yes') {
+        setModalOpen(true)
+        setCelebrating(true)
+        window.setTimeout(() => setCelebrating(false), 3600)
+      } else {
+        setDeclineOpen(true)
+      }
+    } catch (error) {
+      window.alert(error instanceof Error && error.message === 'duplicate-name' ? 'Ya existe una respuesta registrada con ese nombre.' : 'No pudimos guardar tu respuesta. Probá nuevamente.')
     }
   }
 
@@ -91,9 +97,9 @@ function App() {
       <div className="flex items-center gap-4 md:gap-8"><button type="button" onClick={() => setMusicOn((active) => !active)} aria-pressed={musicOn} aria-label={musicOn ? 'Apagar música' : 'Activar música'} className={`flex min-h-10 items-center gap-2 border px-3 font-mono text-[9px] tracking-widest transition ${musicOn ? 'border-lime-300 bg-lime-300 text-black' : 'border-white/25 hover:border-lime-300 hover:text-lime-300'}`}><span aria-hidden="true">{musicOn ? '■' : '▶'}</span><span className="hidden sm:inline">{musicOn ? 'APAGAR' : 'MÚSICA'}</span></button><button onClick={() => setMenu(!menu)} className="font-mono text-[10px] tracking-[.2em] md:hidden">{menu ? 'CERRAR' : 'MENÚ'}</button><nav className={`${menu ? 'flex' : 'hidden'} absolute left-0 top-16 w-full flex-col gap-6 bg-zinc-950 p-6 font-mono text-[10px] tracking-[.2em] md:static md:flex md:w-auto md:flex-row md:items-center md:bg-transparent md:p-0`}><a href="#info">INFO</a><a href="#rsvp">RSVP</a></nav></div>
     </header>
     <section ref={heroRef} id="inicio" className="hero-bg relative isolate flex min-h-[780px] flex-col justify-between px-[5vw] pb-14 pt-28 md:min-h-screen md:pb-16 md:pt-32">
-      <div className="noise pointer-events-none absolute inset-0 -z-10 opacity-25" /><div className="techno-atmosphere pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true"><i className="techno-grid" /><i className="techno-beam beam-one" /><i className="techno-beam beam-two" /><i className="techno-haze" /></div><div className="pulse-orb absolute left-1/2 top-[30%] -z-10 size-[90vw] -translate-x-1/2 rounded-full md:top-[17%] md:size-[42vw]" />
+      <div className="noise pointer-events-none absolute inset-0 -z-10 opacity-25" /><div className="techno-atmosphere pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true"><i className="ceiling-light ceiling-one" /><i className="ceiling-light ceiling-two" /><i className="ceiling-light ceiling-three" /><i className="techno-grid" /><i className="techno-beam beam-one" /><i className="techno-beam beam-two" /><i className="techno-beam beam-three" /><i className="techno-beam beam-four" /><i className="techno-beam beam-five" /><i className="techno-haze" /><i className="light-scan" /></div><div className="pulse-orb absolute left-1/2 top-[30%] -z-10 size-[90vw] -translate-x-1/2 rounded-full md:top-[17%] md:size-[42vw]" />
       <p className="text-center font-mono text-[9px] tracking-[.25em]">FESTEJEMOS JUNTOS</p>
-      <div className="flex flex-col items-center justify-center font-display leading-[.72] tracking-[-.08em] md:flex-row"><span className="parallax-host max-w-full whitespace-nowrap text-[19vw] md:text-[12vw]">{party.host}</span><strong className="parallax-age outline-text text-[19vw] font-normal md:text-[12vw]">{party.age}</strong></div>
+      <div className="flex w-full flex-col items-center justify-center font-display text-[16vw] leading-[.78] tracking-[-.08em] md:flex-row md:text-[12vw] md:leading-[.72]"><span className="parallax-host w-full whitespace-nowrap text-center md:w-auto">{party.host}</span><strong className="parallax-age outline-text font-normal">{party.age}</strong></div>
       <div className="grid grid-cols-2 items-end font-mono text-[9px] leading-relaxed tracking-[.14em] md:grid-cols-[1fr_auto_1fr]"><p>UNA NOCHE<br />FUERA DE FRECUENCIA</p><a href="#rsvp" aria-label="Confirmar asistencia" className="hidden size-16 place-items-center rounded-full border border-white text-2xl transition hover:bg-lime-300 hover:text-black md:grid">↓</a><p className="text-right">{party.date}<br />{party.city}</p></div>
       <div className="absolute inset-x-0 bottom-0 overflow-hidden bg-lime-300 py-2 font-mono text-[10px] font-medium text-black"><div className="marquee w-max whitespace-nowrap">TECHNO · FRIENDS · ALL NIGHT LONG · NO PHOTOS · TECHNO · FRIENDS · ALL NIGHT LONG · NO PHOTOS · TECHNO · FRIENDS · ALL NIGHT LONG · NO PHOTOS ·&nbsp;</div></div>
     </section>
@@ -103,6 +109,7 @@ function App() {
     <section id="rsvp" className="grid min-h-[680px] md:grid-cols-2"><div className="rsvp-glow border-b border-white/15 p-[5vw] py-24 md:border-b-0 md:border-r md:py-28"><p className="label">[ CONFIRMÁ TU LUGAR ]</p><h2 className="mt-28 font-display text-[22vw] leading-[.8] tracking-[-.08em] text-lime-300 md:mt-40 md:text-[10vw]">¿VENÍS?</h2><p className="mt-8 leading-relaxed text-zinc-400">Dejanos tu respuesta.<br />La ubicación exacta llega a quienes estén en lista.</p></div>
       <div className="flex items-center p-[5vw] py-20 md:px-[6vw]">{confirmed ? <div role="status"><span className="text-6xl text-lime-300">✓</span><h3 className="mt-8 font-display text-4xl leading-none md:text-6xl">{attendance === 'yes' ? `TE ESPERAMOS, ${name.toUpperCase()}.` : `GRACIAS POR AVISAR, ${name.toUpperCase()}.`}</h3><p className="mt-6 text-zinc-400">{attendance === 'yes' ? 'Nos vemos en la pista. Guardá esta fecha.' : 'Te vamos a extrañar esta vez.'}</p><button onClick={() => setConfirmed(false)} className="mt-12 border-b pb-2 font-mono text-[10px] tracking-widest">EDITAR RESPUESTA</button></div> : <form onSubmit={submit} className="w-full"><Field label="TU NOMBRE"><input required value={name} onChange={e => setName(e.target.value)} placeholder="Escribí tu nombre" /></Field><fieldset className="border-b border-white/20 py-8"><legend className="label">¿ASISTÍS?</legend><div className="mt-5 grid grid-cols-2 gap-3"><label className={`cursor-pointer border p-5 text-center font-mono text-xs transition ${attendance === 'yes' ? 'border-lime-300 bg-lime-300 text-black' : 'border-white/20 hover:border-white'}`}><input required type="radio" name="attendance" value="yes" checked={attendance === 'yes'} onChange={e => setAttendance(e.target.value)} className="sr-only" /> SÍ, VOY</label><label className={`cursor-pointer border p-5 text-center font-mono text-xs transition ${attendance === 'no' ? 'border-lime-300 bg-lime-300 text-black' : 'border-white/20 hover:border-white'}`}><input required type="radio" name="attendance" value="no" checked={attendance === 'no'} onChange={e => setAttendance(e.target.value)} className="sr-only" /> NO PUEDO</label></div></fieldset><div className="border-b border-white/20 py-6"><div className="flex items-center justify-between"><span className="label">¿VENÍS CON ALGUIEN? (OPCIONAL)</span><button type="button" onClick={() => setGuests([...guests, ''])} aria-label="Agregar otro invitado" className="grid size-9 place-items-center rounded-full border border-lime-300 text-xl text-lime-300 transition hover:bg-lime-300 hover:text-black">+</button></div><div className="mt-2 space-y-2">{guests.map((guest, index) => <div key={index} className="form-control flex items-center gap-3"><input name={`guest-${index + 1}`} value={guest} onChange={e => setGuests(guests.map((item, i) => i === index ? e.target.value : item))} placeholder={index === 0 ? 'Nombre de tu invitado/a' : `Invitado/a ${index + 1}`} />{index > 0 && <button type="button" onClick={() => setGuests(guests.filter((_, i) => i !== index))} aria-label={`Quitar invitado ${index + 1}`} className="text-xl text-zinc-500 transition hover:text-white">−</button>}</div>)}</div></div><button className="mt-8 flex w-full justify-between bg-lime-300 p-5 font-mono text-xs font-medium text-black transition hover:bg-white">ENVIAR RESPUESTA <span>↗</span></button></form>}</div>
     </section>
+    {declineOpen && <DeclineModal name={name} close={() => setDeclineOpen(false)} />}
     {modalOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5 backdrop-blur-md" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setModalOpen(false) }}><section role="dialog" aria-modal="true" aria-labelledby="reminder-title" className="relative w-full max-w-xl border border-lime-300 bg-zinc-950 p-7 shadow-[0_0_80px_rgba(199,255,26,.18)] md:p-12"><button type="button" onClick={() => setModalOpen(false)} aria-label="Cerrar" className="absolute right-5 top-5 grid size-10 place-items-center border border-white/20 font-mono text-lg transition hover:border-lime-300 hover:text-lime-300">×</button><p className="label text-lime-300">[ GUARDÁ ESTOS DATOS ]</p><h2 id="reminder-title" className="mt-8 pr-12 font-display text-4xl leading-none tracking-[-.05em] md:text-6xl">NOS VEMOS EN LA PISTA.</h2><dl className="mt-10 divide-y divide-white/15 border-y border-white/15 font-mono"><div className="grid grid-cols-[90px_1fr] gap-4 py-5"><dt className="text-[10px] tracking-widest text-zinc-500">FECHA</dt><dd className="text-sm">{party.fullDate}</dd></div><div className="grid grid-cols-[90px_1fr] gap-4 py-5"><dt className="text-[10px] tracking-widest text-zinc-500">HORA</dt><dd className="text-sm">{party.time} hs</dd></div><div className="grid grid-cols-[90px_1fr] gap-4 py-5"><dt className="text-[10px] tracking-widest text-zinc-500">LUGAR</dt><dd className="text-sm text-lime-300">{party.address}</dd></div></dl><button type="button" onClick={() => setModalOpen(false)} className="mt-8 w-full bg-lime-300 p-4 font-mono text-xs font-medium text-black transition hover:bg-white">ENTENDIDO</button></section></div>}
     <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-white/15 px-[5vw] py-9 font-mono text-[9px] tracking-widest"><a href="#inicio" className="font-display text-2xl">B<span className="text-lime-300">/</span>23</a><p>{party.date} · TUCUMÁN</p><p>HECHO PARA BAILAR</p></footer>
   </main>
@@ -124,6 +131,15 @@ function Confetti() {
     } as CSSProperties
     return <i key={index} className="confetti-piece absolute block" style={style} />
   })}</div>
+}
+
+function DeclineModal({ name, close }: { name: string; close: () => void }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/85 p-5 backdrop-blur-md" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}>
+    <div className="pointer-events-none absolute inset-0" aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <i key={index} className="sad-drop absolute top-0 h-16 w-px bg-gradient-to-b from-transparent via-violet-400 to-transparent" style={{ left: `${(index * 43) % 100}%`, '--rain-duration': `${1.8 + (index % 6) * .3}s`, '--rain-delay': `${-(index % 8) * .35}s` } as CSSProperties} />)}</div>
+    <section role="dialog" aria-modal="true" aria-labelledby="decline-title" className="relative w-full max-w-lg border border-violet-400/50 bg-zinc-950 p-8 text-center shadow-[0_0_90px_rgba(134,45,255,.2)] md:p-12">
+      <p className="label text-violet-300">[ RESPUESTA GUARDADA ]</p><div className="mt-7 text-6xl" aria-hidden="true">☹</div><h2 id="decline-title" className="mt-6 font-display text-4xl leading-none tracking-[-.05em] md:text-5xl">NOOO, {name.toUpperCase()}.</h2><p className="mx-auto mt-6 max-w-sm leading-relaxed text-zinc-400">Te vamos a extrañar en la pista. Gracias por avisarnos.</p><button type="button" onClick={close} className="mt-8 w-full border border-violet-400 p-4 font-mono text-xs text-violet-300 transition hover:bg-violet-500 hover:text-white">CERRAR</button>
+    </section>
+  </div>
 }
 
 function Field({ label, children }: { label: string, children: ReactNode }) { return <label className="label block border-b border-white/20 py-6">{label}<div className="form-control mt-3">{children}</div></label> }

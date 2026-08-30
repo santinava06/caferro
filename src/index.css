@@ -10,15 +10,26 @@
 .noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E"); mix-blend-mode: overlay; }
 .marquee { animation: marquee 22s linear infinite; } @keyframes marquee { to { transform: translateX(-50%); } }
 .confetti-piece { animation: confetti-fall var(--duration) cubic-bezier(.18,.7,.32,1) var(--delay) forwards; }
+.sad-drop { animation: sad-rain var(--rain-duration) linear var(--rain-delay) infinite; }
 .techno-grid { position: absolute; inset: 38% -25% -35%; opacity: .13; background-image: linear-gradient(rgba(199,255,26,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(134,45,255,.55) 1px, transparent 1px); background-size: 54px 38px; transform: perspective(420px) rotateX(62deg) translateY(0); transform-origin: center top; animation: grid-drive 5s linear infinite; mask-image: linear-gradient(to bottom, transparent, #000 24%, #000); }
+.ceiling-light { position: absolute; top: -8%; width: 24vw; height: 82%; clip-path: polygon(47% 0,53% 0,100% 100%,0 100%); filter: blur(12px); mix-blend-mode: screen; opacity: .12; transform-origin: 50% 0; }.ceiling-one { left: 6%; background: linear-gradient(to bottom, rgba(255,36,205,.75), transparent 82%); animation: ceiling-swing-one 8s ease-in-out infinite alternate; }.ceiling-two { left: 39%; background: linear-gradient(to bottom, rgba(199,255,26,.7), transparent 84%); animation: ceiling-swing-two 10s ease-in-out -3s infinite alternate; }.ceiling-three { right: 5%; background: linear-gradient(to bottom, rgba(35,220,255,.75), transparent 80%); animation: ceiling-swing-three 9s ease-in-out -5s infinite alternate; }
 .techno-beam { position: absolute; top: -30%; left: 50%; width: 3px; height: 115%; transform-origin: 50% 0; background: linear-gradient(to bottom, transparent, rgba(199,255,26,.8), transparent); box-shadow: 0 0 14px #c7ff1a, 0 0 45px rgba(199,255,26,.35); opacity: .42; }
-.beam-one { animation: beam-sweep 7s ease-in-out infinite alternate; }.beam-two { background: linear-gradient(to bottom, transparent, rgba(134,45,255,.9), transparent); box-shadow: 0 0 14px #862dff, 0 0 50px rgba(134,45,255,.5); animation: beam-sweep-two 9s ease-in-out -3s infinite alternate; }
+.beam-one { animation: beam-sweep 7s ease-in-out infinite alternate; }.beam-two { background: linear-gradient(to bottom, transparent, rgba(134,45,255,.9), transparent); box-shadow: 0 0 14px #862dff, 0 0 50px rgba(134,45,255,.5); animation: beam-sweep-two 9s ease-in-out -3s infinite alternate; }.beam-three { left: 20%; background: linear-gradient(to bottom, transparent, rgba(255,36,205,.85), transparent); box-shadow: 0 0 12px #ff24cd, 0 0 42px rgba(255,36,205,.45); opacity: .3; animation: beam-sweep-three 12s ease-in-out -5s infinite alternate; }.beam-four { left: 74%; background: linear-gradient(to bottom, transparent, rgba(35,220,255,.9), transparent); box-shadow: 0 0 12px #23dcff, 0 0 42px rgba(35,220,255,.45); opacity: .28; animation: beam-sweep-four 10s ease-in-out -2s infinite alternate; }.beam-five { left: 34%; background: linear-gradient(to bottom, transparent, rgba(255,255,255,.8), transparent); box-shadow: 0 0 10px #fff, 0 0 35px rgba(255,255,255,.3); opacity: .18; animation: beam-sweep-five 14s ease-in-out -7s infinite alternate; }
 .techno-haze { position: absolute; inset: 0; background: radial-gradient(circle at 18% 65%, rgba(134,45,255,.18), transparent 28%), radial-gradient(circle at 82% 35%, rgba(199,255,26,.09), transparent 24%); animation: haze-pulse 2s ease-in-out infinite alternate; }
+.light-scan { position: absolute; inset: -20% 0 auto; height: 28%; background: linear-gradient(to bottom, transparent, rgba(255,255,255,.055), transparent); filter: blur(12px); animation: light-scan 7s linear infinite; }
 @keyframes confetti-fall { 0% { transform: translate3d(0,-12vh,0) rotate(0); opacity: 1; } 100% { transform: translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity: .9; } }
+@keyframes sad-rain { from { transform: translateY(-20vh); opacity: 0; } 15% { opacity: .65; } to { transform: translateY(120vh); opacity: 0; } }
 @keyframes grid-drive { to { background-position: 0 76px, 54px 0; } }
+@keyframes ceiling-swing-one { from { transform: rotate(-10deg); opacity: .08; } to { transform: rotate(14deg); opacity: .18; } }
+@keyframes ceiling-swing-two { from { transform: rotate(12deg); opacity: .07; } to { transform: rotate(-13deg); opacity: .17; } }
+@keyframes ceiling-swing-three { from { transform: rotate(-13deg); opacity: .08; } to { transform: rotate(10deg); opacity: .2; } }
 @keyframes beam-sweep { from { transform: rotate(-58deg); } to { transform: rotate(58deg); } }
 @keyframes beam-sweep-two { from { transform: rotate(62deg); } to { transform: rotate(-42deg); } }
+@keyframes beam-sweep-three { from { transform: rotate(-24deg); } to { transform: rotate(76deg); } }
+@keyframes beam-sweep-four { from { transform: rotate(34deg); } to { transform: rotate(-66deg); } }
+@keyframes beam-sweep-five { from { transform: rotate(-48deg); } to { transform: rotate(44deg); } }
 @keyframes haze-pulse { to { opacity: .55; filter: saturate(1.5); } }
+@keyframes light-scan { to { transform: translateY(140vh); } }
 @keyframes pulse {
   0%, 100% { transform: translateX(-50%) scale(1); }
   50% { transform: translateX(-50%) scale(1.06); filter: blur(9px) hue-rotate(18deg); }
