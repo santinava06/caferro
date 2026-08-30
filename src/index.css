@@ -10,7 +10,15 @@
 .noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E"); mix-blend-mode: overlay; }
 .marquee { animation: marquee 22s linear infinite; } @keyframes marquee { to { transform: translateX(-50%); } }
 .confetti-piece { animation: confetti-fall var(--duration) cubic-bezier(.18,.7,.32,1) var(--delay) forwards; }
+.techno-grid { position: absolute; inset: 38% -25% -35%; opacity: .13; background-image: linear-gradient(rgba(199,255,26,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(134,45,255,.55) 1px, transparent 1px); background-size: 54px 38px; transform: perspective(420px) rotateX(62deg) translateY(0); transform-origin: center top; animation: grid-drive 5s linear infinite; mask-image: linear-gradient(to bottom, transparent, #000 24%, #000); }
+.techno-beam { position: absolute; top: -30%; left: 50%; width: 3px; height: 115%; transform-origin: 50% 0; background: linear-gradient(to bottom, transparent, rgba(199,255,26,.8), transparent); box-shadow: 0 0 14px #c7ff1a, 0 0 45px rgba(199,255,26,.35); opacity: .42; }
+.beam-one { animation: beam-sweep 7s ease-in-out infinite alternate; }.beam-two { background: linear-gradient(to bottom, transparent, rgba(134,45,255,.9), transparent); box-shadow: 0 0 14px #862dff, 0 0 50px rgba(134,45,255,.5); animation: beam-sweep-two 9s ease-in-out -3s infinite alternate; }
+.techno-haze { position: absolute; inset: 0; background: radial-gradient(circle at 18% 65%, rgba(134,45,255,.18), transparent 28%), radial-gradient(circle at 82% 35%, rgba(199,255,26,.09), transparent 24%); animation: haze-pulse 2s ease-in-out infinite alternate; }
 @keyframes confetti-fall { 0% { transform: translate3d(0,-12vh,0) rotate(0); opacity: 1; } 100% { transform: translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity: .9; } }
+@keyframes grid-drive { to { background-position: 0 76px, 54px 0; } }
+@keyframes beam-sweep { from { transform: rotate(-58deg); } to { transform: rotate(58deg); } }
+@keyframes beam-sweep-two { from { transform: rotate(62deg); } to { transform: rotate(-42deg); } }
+@keyframes haze-pulse { to { opacity: .55; filter: saturate(1.5); } }
 @keyframes pulse {
   0%, 100% { transform: translateX(-50%) scale(1); }
   50% { transform: translateX(-50%) scale(1.06); filter: blur(9px) hue-rotate(18deg); }

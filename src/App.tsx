@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent, ReactNode } from 'react'
+import houseTrack from '../mp3/Hernan Cerbello - Shadows & Rain (SPOTISAVER).mp3'
 
 const party = { host: 'CAFERRO', age: '23', date: 'SÁB 05 SEP 2026', fullDate: 'Sábado 5 de septiembre de 2026', time: '23:30', venue: 'UBICACIÓN SECRETA', address: 'Paraguay 3838, San Miguel de Tucumán', city: 'SAN MIGUEL DE TUCUMÁN' }
 const details = [['01 / CUÁNDO', party.date, `Puertas ${party.time} hs`, 'Hasta que salga el sol'], ['02 / DÓNDE', party.venue, party.city, 'Dirección al confirmar'], ['03 / ACTITUD', 'SIN DRESS CODE', 'Sin excusas', 'Solo ganas de bailar']]
@@ -13,9 +14,9 @@ function App() {
   const [attendance, setAttendance] = useState('')
   const [guests, setGuests] = useState([''])
   const [modalOpen, setModalOpen] = useState(false)
+  const [musicOn, setMusicOn] = useState(true)
   const [celebrating, setCelebrating] = useState(false)
-  const audioRef = useRef<AudioContext | null>(null)
-  const beatTimerRef = useRef<number | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
@@ -35,29 +36,26 @@ function App() {
   }
 
   useEffect(() => {
-    let started = false
     const startMusic = async () => {
-      if (started) return
-      const context = audioRef.current || new AudioContext()
-      audioRef.current = context
-      await context.resume()
-      if (context.state !== 'running') return
-      started = true
-      playTechnoBeat(context)
-      beatTimerRef.current = window.setInterval(() => playTechnoBeat(context), 500)
-      window.removeEventListener('pointerdown', startMusic)
-      window.removeEventListener('keydown', startMusic)
+      const audio = audioRef.current
+      if (!musicOn || !audio || !audio.paused) return
+      try {
+        audio.volume = .55
+        await audio.play()
+      } catch { /* El primer gesto del usuario vuelve a intentar el inicio. */ }
     }
-    void startMusic()
-    window.addEventListener('pointerdown', startMusic, { passive: true })
-    window.addEventListener('keydown', startMusic)
+    if (musicOn) {
+      void startMusic()
+      window.addEventListener('pointerdown', startMusic, { passive: true })
+      window.addEventListener('keydown', startMusic)
+    } else {
+      audioRef.current?.pause()
+    }
     return () => {
       window.removeEventListener('pointerdown', startMusic)
       window.removeEventListener('keydown', startMusic)
-      if (beatTimerRef.current !== null) window.clearInterval(beatTimerRef.current)
-      void audioRef.current?.close()
     }
-  }, [])
+  }, [musicOn])
 
   useEffect(() => {
     const hero = heroRef.current
@@ -86,14 +84,14 @@ function App() {
   }, [])
 
   return <main className="overflow-hidden bg-zinc-950 text-stone-100 selection:bg-lime-300 selection:text-black">
+    <audio ref={audioRef} src={houseTrack} loop preload="auto" />
     {celebrating && <Confetti />}
     <header className="absolute z-30 flex h-16 w-full items-center justify-between border-b border-white/20 px-[5vw] md:h-20">
       <a href="#inicio" className="font-display text-2xl tracking-[-.12em]">B<span className="text-lime-300">/</span>23</a>
-      <button onClick={() => setMenu(!menu)} className="font-mono text-[10px] tracking-[.2em] md:hidden">{menu ? 'CERRAR' : 'MENÚ'}</button>
-      <nav className={`${menu ? 'flex' : 'hidden'} absolute left-0 top-16 w-full flex-col gap-6 bg-zinc-950 p-6 font-mono text-[10px] tracking-[.2em] md:static md:flex md:w-auto md:flex-row md:items-center md:bg-transparent md:p-0`}><a href="#info">INFO</a><a href="#rsvp">RSVP</a></nav>
+      <div className="flex items-center gap-4 md:gap-8"><button type="button" onClick={() => setMusicOn((active) => !active)} aria-pressed={musicOn} aria-label={musicOn ? 'Apagar música' : 'Activar música'} className={`flex min-h-10 items-center gap-2 border px-3 font-mono text-[9px] tracking-widest transition ${musicOn ? 'border-lime-300 bg-lime-300 text-black' : 'border-white/25 hover:border-lime-300 hover:text-lime-300'}`}><span aria-hidden="true">{musicOn ? '■' : '▶'}</span><span className="hidden sm:inline">{musicOn ? 'APAGAR' : 'MÚSICA'}</span></button><button onClick={() => setMenu(!menu)} className="font-mono text-[10px] tracking-[.2em] md:hidden">{menu ? 'CERRAR' : 'MENÚ'}</button><nav className={`${menu ? 'flex' : 'hidden'} absolute left-0 top-16 w-full flex-col gap-6 bg-zinc-950 p-6 font-mono text-[10px] tracking-[.2em] md:static md:flex md:w-auto md:flex-row md:items-center md:bg-transparent md:p-0`}><a href="#info">INFO</a><a href="#rsvp">RSVP</a></nav></div>
     </header>
     <section ref={heroRef} id="inicio" className="hero-bg relative isolate flex min-h-[780px] flex-col justify-between px-[5vw] pb-14 pt-28 md:min-h-screen md:pb-16 md:pt-32">
-      <div className="noise pointer-events-none absolute inset-0 -z-10 opacity-25" /><div className="pulse-orb absolute left-1/2 top-[30%] -z-10 size-[90vw] -translate-x-1/2 rounded-full md:top-[17%] md:size-[42vw]" />
+      <div className="noise pointer-events-none absolute inset-0 -z-10 opacity-25" /><div className="techno-atmosphere pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true"><i className="techno-grid" /><i className="techno-beam beam-one" /><i className="techno-beam beam-two" /><i className="techno-haze" /></div><div className="pulse-orb absolute left-1/2 top-[30%] -z-10 size-[90vw] -translate-x-1/2 rounded-full md:top-[17%] md:size-[42vw]" />
       <p className="text-center font-mono text-[9px] tracking-[.25em]">FESTEJEMOS JUNTOS</p>
       <div className="flex flex-col items-center justify-center font-display leading-[.72] tracking-[-.08em] md:flex-row"><span className="parallax-host max-w-full whitespace-nowrap text-[19vw] md:text-[12vw]">{party.host}</span><strong className="parallax-age outline-text text-[19vw] font-normal md:text-[12vw]">{party.age}</strong></div>
       <div className="grid grid-cols-2 items-end font-mono text-[9px] leading-relaxed tracking-[.14em] md:grid-cols-[1fr_auto_1fr]"><p>UNA NOCHE<br />FUERA DE FRECUENCIA</p><a href="#rsvp" aria-label="Confirmar asistencia" className="hidden size-16 place-items-center rounded-full border border-white text-2xl transition hover:bg-lime-300 hover:text-black md:grid">↓</a><p className="text-right">{party.date}<br />{party.city}</p></div>
@@ -108,39 +106,6 @@ function App() {
     {modalOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5 backdrop-blur-md" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setModalOpen(false) }}><section role="dialog" aria-modal="true" aria-labelledby="reminder-title" className="relative w-full max-w-xl border border-lime-300 bg-zinc-950 p-7 shadow-[0_0_80px_rgba(199,255,26,.18)] md:p-12"><button type="button" onClick={() => setModalOpen(false)} aria-label="Cerrar" className="absolute right-5 top-5 grid size-10 place-items-center border border-white/20 font-mono text-lg transition hover:border-lime-300 hover:text-lime-300">×</button><p className="label text-lime-300">[ GUARDÁ ESTOS DATOS ]</p><h2 id="reminder-title" className="mt-8 pr-12 font-display text-4xl leading-none tracking-[-.05em] md:text-6xl">NOS VEMOS EN LA PISTA.</h2><dl className="mt-10 divide-y divide-white/15 border-y border-white/15 font-mono"><div className="grid grid-cols-[90px_1fr] gap-4 py-5"><dt className="text-[10px] tracking-widest text-zinc-500">FECHA</dt><dd className="text-sm">{party.fullDate}</dd></div><div className="grid grid-cols-[90px_1fr] gap-4 py-5"><dt className="text-[10px] tracking-widest text-zinc-500">HORA</dt><dd className="text-sm">{party.time} hs</dd></div><div className="grid grid-cols-[90px_1fr] gap-4 py-5"><dt className="text-[10px] tracking-widest text-zinc-500">LUGAR</dt><dd className="text-sm text-lime-300">{party.address}</dd></div></dl><button type="button" onClick={() => setModalOpen(false)} className="mt-8 w-full bg-lime-300 p-4 font-mono text-xs font-medium text-black transition hover:bg-white">ENTENDIDO</button></section></div>}
     <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-white/15 px-[5vw] py-9 font-mono text-[9px] tracking-widest"><a href="#inicio" className="font-display text-2xl">B<span className="text-lime-300">/</span>23</a><p>{party.date} · TUCUMÁN</p><p>HECHO PARA BAILAR</p></footer>
   </main>
-}
-
-function playTechnoBeat(context: AudioContext) {
-  const now = context.currentTime
-  const kick = context.createOscillator()
-  const kickGain = context.createGain()
-  kick.type = 'sine'
-  kick.frequency.setValueAtTime(145, now)
-  kick.frequency.exponentialRampToValueAtTime(48, now + .12)
-  kickGain.gain.setValueAtTime(.22, now)
-  kickGain.gain.exponentialRampToValueAtTime(.001, now + .22)
-  kick.connect(kickGain).connect(context.destination)
-  kick.start(now); kick.stop(now + .23)
-
-  const bass = context.createOscillator()
-  const bassGain = context.createGain()
-  bass.type = 'sawtooth'
-  bass.frequency.value = Math.floor(now) % 2 ? 55 : 65.41
-  bassGain.gain.setValueAtTime(.035, now + .08)
-  bassGain.gain.exponentialRampToValueAtTime(.001, now + .38)
-  bass.connect(bassGain).connect(context.destination)
-  bass.start(now + .08); bass.stop(now + .4)
-
-  const buffer = context.createBuffer(1, Math.floor(context.sampleRate * .035), context.sampleRate)
-  const data = buffer.getChannelData(0)
-  for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1
-  const hat = context.createBufferSource()
-  const hatGain = context.createGain()
-  hat.buffer = buffer
-  hatGain.gain.setValueAtTime(.025, now + .25)
-  hatGain.gain.exponentialRampToValueAtTime(.001, now + .3)
-  hat.connect(hatGain).connect(context.destination)
-  hat.start(now + .25)
 }
 
 function Confetti() {
