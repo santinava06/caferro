@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 type Rsvp = { id: string; name: string; attendance: 'yes' | 'no'; guests: string[]; createdAt: string }
+type AdminNotice = { kind: 'delete'; record: Rsvp } | { kind: 'success' | 'error'; message: string } | null
 
 export default function Admin() {
   const queryToken = new URLSearchParams(window.location.search).get('token') || ''
@@ -9,6 +10,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(Boolean(token))
   const [error, setError] = useState('')
   const [editing, setEditing] = useState<Rsvp | null>(null)
+  const [notice, setNotice] = useState<AdminNotice>(null)
   const auth = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token])
   const attending = records.filter((record) => record.attendance === 'yes')
   const guestCount = attending.reduce((total, record) => total + record.guests.length, 0)
@@ -32,22 +34,27 @@ export default function Admin() {
 
   async function save(record: Rsvp) {
     const response = await fetch('/api/responses', { method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(record) })
-    if (!response.ok) return window.alert('No se pudo guardar el cambio.')
+    if (!response.ok) return setNotice({ kind: 'error', message: 'No se pudieron guardar los cambios.' })
     const updated: Rsvp = await response.json()
     setRecords(records.map((item) => item.id === updated.id ? updated : item))
     setEditing(null)
+    setNotice({ kind: 'success', message: `La respuesta de ${updated.name} fue actualizada.` })
   }
 
-  async function remove(record: Rsvp) {
-    if (!window.confirm(`¿Eliminar la respuesta de ${record.name}?`)) return
+  function remove(record: Rsvp) {
+    setNotice({ kind: 'delete', record })
+  }
+
+  async function deleteRecord(record: Rsvp) {
     const response = await fetch('/api/responses', { method: 'DELETE', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: record.id }) })
-    if (!response.ok) return window.alert('No se pudo eliminar la respuesta.')
+    if (!response.ok) return setNotice({ kind: 'error', message: 'No se pudo eliminar la respuesta.' })
     setRecords(records.filter((item) => item.id !== record.id))
+    setNotice({ kind: 'success', message: `La respuesta de ${record.name} fue eliminada.` })
   }
 
   async function downloadExcel() {
     const response = await fetch('/api/responses.xlsx', { headers: auth })
-    if (!response.ok) return window.alert('No se pudo generar el Excel.')
+    if (!response.ok) return setNotice({ kind: 'error', message: 'No se pudo generar el archivo de Excel.' })
     const url = URL.createObjectURL(await response.blob())
     const anchor = document.createElement('a')
     anchor.href = url
@@ -73,6 +80,7 @@ export default function Admin() {
       <div className="hidden overflow-x-auto border border-white/15 md:block"><table className="w-full min-w-[800px] border-collapse text-left"><thead className="bg-lime-300 font-mono text-[10px] tracking-widest text-black"><tr><th className="p-4">NOMBRE</th><th className="p-4">ASISTE</th><th className="p-4">INVITADOS</th><th className="p-4">TOTAL</th><th className="p-4">RESPONDIÓ</th><th className="p-4 text-right">ACCIONES</th></tr></thead><tbody>{records.map(record => <tr key={record.id} className={`border-t border-white/10 ${record.guests.length ? 'bg-violet-950/40' : ''}`}><td className="p-4 font-medium">{record.name}</td><td className="p-4"><Status value={record.attendance} /></td><td className="p-4 text-sm text-zinc-400">{record.guests.join(', ') || '—'}</td><td className="p-4 font-mono">{record.attendance === 'yes' ? record.guests.length + 1 : 0}</td><td className="p-4 font-mono text-xs text-zinc-500">{formatDate(record.createdAt)}</td><td className="p-4 text-right"><button onClick={() => setEditing({...record})} className="mr-4 min-h-10 font-mono text-[10px] text-lime-300">EDITAR</button><button onClick={() => remove(record)} className="min-h-10 font-mono text-[10px] text-red-400">ELIMINAR</button></td></tr>)}</tbody></table>{records.length === 0 && <Empty />}</div>
     </>}
     {editing && <EditModal record={editing} setRecord={setEditing} close={() => setEditing(null)} save={save} />}
+    {notice && <AdminNoticeModal notice={notice} close={() => setNotice(null)} confirmDelete={deleteRecord} />}
   </main>
 }
 
@@ -91,6 +99,35 @@ function formatDate(value: string) { return new Date(value).toLocaleString('es-A
 function Login({ submit }: { submit: (token: string) => void }) {
   const [draft, setDraft] = useState('')
   return <main className="grid min-h-[100svh] place-items-center bg-zinc-950 p-4 text-white"><form onSubmit={e => { e.preventDefault(); submit(draft) }} className="w-full max-w-md border border-white/15 p-6 sm:p-8"><p className="label text-lime-300">[ ACCESO PRIVADO ]</p><h1 className="mt-4 font-display text-4xl">ADMIN RSVP</h1><label className="label mt-10 block">TOKEN<input autoFocus required type="password" value={draft} onChange={e => setDraft(e.target.value)} className="mt-3 block min-h-14 w-full border border-white/20 bg-transparent p-4 font-sans text-base outline-none focus:border-lime-300" /></label><button className="mt-4 min-h-14 w-full bg-lime-300 p-4 font-mono text-xs text-black">ENTRAR</button></form></main>
+}
+
+function AdminNoticeModal({ notice, close, confirmDelete }: { notice: Exclude<AdminNotice, null>; close: () => void; confirmDelete: (record: Rsvp) => Promise<void> }) {
+  const [deleting, setDeleting] = useState(false)
+  const isDelete = notice.kind === 'delete'
+  const isError = notice.kind === 'error'
+
+  async function handleDelete() {
+    if (!isDelete || deleting) return
+    setDeleting(true)
+    await confirmDelete(notice.record)
+  }
+
+  return <div className="fixed inset-0 z-[60] flex items-end bg-black/85 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4" role={isDelete ? 'alertdialog' : 'dialog'} aria-modal="true" aria-labelledby="admin-notice-title" aria-describedby="admin-notice-description">
+    <div className={`w-full border-t bg-zinc-950 p-5 sm:max-w-md sm:border ${isError || isDelete ? 'border-red-500/50' : 'border-lime-300/50'}`}>
+      <div className={`grid size-12 place-items-center border font-display text-2xl ${isError || isDelete ? 'border-red-500/40 bg-red-500/10 text-red-400' : 'border-lime-300/40 bg-lime-300/10 text-lime-300'}`} aria-hidden="true">
+        {isDelete ? '!' : isError ? '×' : '✓'}
+      </div>
+      <p className={`label mt-5 ${isError || isDelete ? 'text-red-400' : 'text-lime-300'}`}>{isDelete ? '[ CONFIRMAR ACCIÓN ]' : isError ? '[ OCURRIÓ UN ERROR ]' : '[ CAMBIOS GUARDADOS ]'}</p>
+      <h2 id="admin-notice-title" className="mt-2 font-display text-3xl">{isDelete ? '¿ELIMINAR RESPUESTA?' : isError ? 'NO SE PUDO COMPLETAR' : 'LISTO'}</h2>
+      <p id="admin-notice-description" className="mt-4 text-sm leading-relaxed text-zinc-400">
+        {isDelete ? <>Vas a eliminar la respuesta de <strong className="text-white">{notice.record.name}</strong>. Esta acción no se puede deshacer.</> : notice.message}
+      </p>
+      {isDelete ? <div className="mt-7 grid grid-cols-2 gap-2 sm:gap-3">
+        <button type="button" onClick={close} disabled={deleting} className="min-h-12 border border-white/20 p-3 font-mono text-[10px] disabled:opacity-40">CANCELAR</button>
+        <button type="button" onClick={handleDelete} disabled={deleting} className="min-h-12 bg-red-500 p-3 font-mono text-[10px] text-white disabled:opacity-60">{deleting ? 'ELIMINANDO...' : 'ELIMINAR'}</button>
+      </div> : <button type="button" onClick={close} autoFocus className={`mt-7 min-h-12 w-full p-3 font-mono text-[10px] text-black ${isError ? 'bg-red-400' : 'bg-lime-300'}`}>{isError ? 'CERRAR' : 'ENTENDIDO'}</button>}
+    </div>
+  </div>
 }
 
 function EditModal({ record, setRecord, close, save }: { record: Rsvp; setRecord: (value: Rsvp) => void; close: () => void; save: (value: Rsvp) => void }) {

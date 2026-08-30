@@ -17,6 +17,7 @@ function App() {
   const [declineOpen, setDeclineOpen] = useState(false)
   const [musicOn, setMusicOn] = useState(true)
   const [celebrating, setCelebrating] = useState(false)
+  const [formAlert, setFormAlert] = useState<'duplicate' | 'error' | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -37,7 +38,7 @@ function App() {
         setDeclineOpen(true)
       }
     } catch (error) {
-      window.alert(error instanceof Error && error.message === 'duplicate-name' ? 'Ya existe una respuesta registrada con ese nombre.' : 'No pudimos guardar tu respuesta. Probá nuevamente.')
+      setFormAlert(error instanceof Error && error.message === 'duplicate-name' ? 'duplicate' : 'error')
     }
   }
 
@@ -92,6 +93,7 @@ function App() {
   return <main className="overflow-hidden bg-zinc-950 text-stone-100 selection:bg-lime-300 selection:text-black">
     <audio ref={audioRef} src={houseTrack} loop preload="auto" />
     {celebrating && <Confetti />}
+    {formAlert && <FormAlert type={formAlert} name={name} close={() => setFormAlert(null)} />}
     <header className="absolute z-30 flex h-16 w-full items-center justify-between border-b border-white/20 px-[5vw] md:h-20">
       <a href="#inicio" className="font-display text-2xl tracking-[-.12em]">B<span className="text-lime-300">/</span>23</a>
       <div className="flex items-center gap-4 md:gap-8"><button type="button" onClick={() => setMusicOn((active) => !active)} aria-pressed={musicOn} aria-label={musicOn ? 'Apagar música' : 'Activar música'} className={`flex min-h-10 items-center gap-2 border px-3 font-mono text-[9px] tracking-widest transition ${musicOn ? 'border-lime-300 bg-lime-300 text-black' : 'border-white/25 hover:border-lime-300 hover:text-lime-300'}`}><span aria-hidden="true">{musicOn ? '■' : '▶'}</span><span className="hidden sm:inline">{musicOn ? 'APAGAR' : 'MÚSICA'}</span></button><button onClick={() => setMenu(!menu)} className="font-mono text-[10px] tracking-[.2em] md:hidden">{menu ? 'CERRAR' : 'MENÚ'}</button><nav className={`${menu ? 'flex' : 'hidden'} absolute left-0 top-16 w-full flex-col gap-6 bg-zinc-950 p-6 font-mono text-[10px] tracking-[.2em] md:static md:flex md:w-auto md:flex-row md:items-center md:bg-transparent md:p-0`}><a href="#info">INFO</a><a href="#rsvp">RSVP</a></nav></div>
@@ -138,6 +140,15 @@ function DeclineModal({ name, close }: { name: string; close: () => void }) {
     <div className="pointer-events-none absolute inset-0" aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <i key={index} className="sad-drop absolute top-0 h-16 w-px bg-gradient-to-b from-transparent via-violet-400 to-transparent" style={{ left: `${(index * 43) % 100}%`, '--rain-duration': `${1.8 + (index % 6) * .3}s`, '--rain-delay': `${-(index % 8) * .35}s` } as CSSProperties} />)}</div>
     <section role="dialog" aria-modal="true" aria-labelledby="decline-title" className="relative w-full max-w-lg border border-violet-400/50 bg-zinc-950 p-8 text-center shadow-[0_0_90px_rgba(134,45,255,.2)] md:p-12">
       <p className="label text-violet-300">[ RESPUESTA GUARDADA ]</p><div className="mt-7 text-6xl" aria-hidden="true">☹</div><h2 id="decline-title" className="mt-6 font-display text-4xl leading-none tracking-[-.05em] md:text-5xl">NOOO, {name.toUpperCase()}.</h2><p className="mx-auto mt-6 max-w-sm leading-relaxed text-zinc-400">Te vamos a extrañar en la pista. Gracias por avisarnos.</p><button type="button" onClick={close} className="mt-8 w-full border border-violet-400 p-4 font-mono text-xs text-violet-300 transition hover:bg-violet-500 hover:text-white">CERRAR</button>
+    </section>
+  </div>
+}
+
+function FormAlert({ type, name, close }: { type: 'duplicate' | 'error'; name: string; close: () => void }) {
+  const duplicate = type === 'duplicate'
+  return <div className="fixed inset-0 z-[80] grid place-items-center bg-black/85 p-5 backdrop-blur-md" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}>
+    <section role="alertdialog" aria-modal="true" aria-labelledby="form-alert-title" aria-describedby="form-alert-copy" className={`relative w-full max-w-md overflow-hidden border bg-zinc-950 p-7 shadow-2xl md:p-9 ${duplicate ? 'border-lime-300 shadow-lime-300/10' : 'border-red-400 shadow-red-500/10'}`}>
+      <div className={`absolute inset-x-0 top-0 h-1 ${duplicate ? 'bg-lime-300' : 'bg-red-400'}`} /><button type="button" onClick={close} aria-label="Cerrar aviso" className="absolute right-4 top-4 grid size-10 place-items-center border border-white/15 text-lg text-zinc-400 transition hover:border-white hover:text-white">×</button><p className={`label pr-12 ${duplicate ? 'text-lime-300' : 'text-red-400'}`}>{duplicate ? '[ RESPUESTA DUPLICADA ]' : '[ ALGO SALIÓ MAL ]'}</p><div className={`mt-7 grid size-16 place-items-center rounded-full border text-3xl ${duplicate ? 'border-lime-300 text-lime-300' : 'border-red-400 text-red-400'}`} aria-hidden="true">{duplicate ? '!' : '×'}</div><h2 id="form-alert-title" className="mt-7 font-display text-3xl leading-none tracking-[-.04em]">{duplicate ? 'YA ESTÁS EN LA LISTA.' : 'NO PUDIMOS GUARDARLO.'}</h2><p id="form-alert-copy" className="mt-5 leading-relaxed text-zinc-400">{duplicate ? <>Ya existe una respuesta registrada a nombre de <strong className="font-medium text-white">{name || 'esta persona'}</strong>. Si necesitás modificarla, comunicate con el organizador.</> : 'Revisá tu conexión e intentá enviar la respuesta nuevamente.'}</p><button type="button" autoFocus onClick={close} className={`mt-8 w-full p-4 font-mono text-xs font-medium text-black transition hover:bg-white ${duplicate ? 'bg-lime-300' : 'bg-red-400'}`}>{duplicate ? 'CORREGIR NOMBRE' : 'INTENTAR DE NUEVO'}</button>
     </section>
   </div>
 }
