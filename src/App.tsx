@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import houseTrack from '../mp3/Hernan Cerbello - Shadows & Rain (SPOTISAVER).mp3'
 
-const party = { host: 'CAFERRO', age: '23', date: 'SÁB 05 SEP 2026', fullDate: 'Sábado 5 de septiembre de 2026', time: '23:30', venue: 'UBICACIÓN SECRETA', address: 'Paraguay 3838, San Miguel de Tucumán', city: 'SAN MIGUEL DE TUCUMÁN' }
+const party = { host: 'CAFERRO', age: '23', date: 'SÁB 05 SEP 2026', fullDate: 'Sábado 5 de septiembre de 2026', time: '1:00', venue: 'UBICACIÓN SECRETA', address: 'Paraguay 3838, San Miguel de Tucumán', city: 'SAN MIGUEL DE TUCUMÁN' }
 const details = [['01 / CUÁNDO', party.date, `Puertas ${party.time} hs`, 'Hasta que salga el sol'], ['02 / DÓNDE', party.venue, party.city, 'Dirección al confirmar'], ['03 / ACTITUD', 'SIN DRESS CODE', 'Sin excusas', 'Solo ganas de bailar']]
 const sets = [['01:00—02:00', 'ENTRADA', 'OPENING'], ['02:00—05:00', 'SANTI RIVADENEIRA', 'TECHNO'], ['05:00—08:00', 'ZOE MORZADEC', 'TECHNO']]
 
