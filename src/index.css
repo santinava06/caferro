@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Mono:wght@300;400;500&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+@theme { --font-display: "Archivo Black", Impact, sans-serif; --font-mono: "DM Mono", monospace; --font-sans: Inter, Arial, sans-serif; }
+@layer base { html { scroll-behavior: smooth; } body { margin: 0; min-width: 320px; background: #090909; } button, a { cursor: pointer; } }
+@layer components { .label { @apply font-mono text-[9px] tracking-[.18em]; } .form-control input, .form-control textarea { @apply block w-full resize-y border-0 bg-transparent p-0 text-base tracking-normal text-white outline-none placeholder:text-zinc-700; } }
+.hero-bg { background: radial-gradient(circle at 50% 48%, #27113a 0, #110d16 42%, #080808 75%); }
+.rsvp-glow { background: radial-gradient(circle at 8% 82%, #2b0b43, transparent 52%); }
+.pulse-orb { background: radial-gradient(circle at 34% 30%, #d5ff36, #781fff 31%, #19002e 63%, transparent 72%); opacity: .8; animation: pulse 6s ease-in-out infinite; }
+.outline-text { color: transparent; -webkit-text-stroke: 2px #c7ff1a; }
+.noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E"); mix-blend-mode: overlay; }
+.marquee { animation: marquee 22s linear infinite; } @keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.06); filter: blur(9px) hue-rotate(18deg); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; } }
