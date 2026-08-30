@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import type { CSSProperties, FormEvent, ReactNode } from 'react'
 
 const party = { host: 'CAFERRO', age: '23', date: 'SÁB 05 SEP 2026', fullDate: 'Sábado 5 de septiembre de 2026', time: '23:30', venue: 'UBICACIÓN SECRETA', address: 'Paraguay 3838, San Miguel de Tucumán', city: 'SAN MIGUEL DE TUCUMÁN' }
 const details = [['01 / CUÁNDO', party.date, `Puertas ${party.time} hs`, 'Hasta que salga el sol'], ['02 / DÓNDE', party.venue, party.city, 'Dirección al confirmar'], ['03 / ACTITUD', 'SIN DRESS CODE', 'Sin excusas', 'Solo ganas de bailar']]
@@ -13,6 +13,9 @@ function App() {
   const [attendance, setAttendance] = useState('')
   const [guests, setGuests] = useState([''])
   const [modalOpen, setModalOpen] = useState(false)
+  const [celebrating, setCelebrating] = useState(false)
+  const audioRef = useRef<AudioContext | null>(null)
+  const beatTimerRef = useRef<number | null>(null)
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
@@ -24,10 +27,37 @@ function App() {
       if (!response.ok) throw new Error('No se pudo guardar la respuesta')
       setConfirmed(true)
       setModalOpen(true)
+      setCelebrating(true)
+      window.setTimeout(() => setCelebrating(false), 3600)
     } catch {
       window.alert('No pudimos guardar tu respuesta. Probá nuevamente.')
     }
   }
+
+  useEffect(() => {
+    let started = false
+    const startMusic = async () => {
+      if (started) return
+      const context = audioRef.current || new AudioContext()
+      audioRef.current = context
+      await context.resume()
+      if (context.state !== 'running') return
+      started = true
+      playTechnoBeat(context)
+      beatTimerRef.current = window.setInterval(() => playTechnoBeat(context), 500)
+      window.removeEventListener('pointerdown', startMusic)
+      window.removeEventListener('keydown', startMusic)
+    }
+    void startMusic()
+    window.addEventListener('pointerdown', startMusic, { passive: true })
+    window.addEventListener('keydown', startMusic)
+    return () => {
+      window.removeEventListener('pointerdown', startMusic)
+      window.removeEventListener('keydown', startMusic)
+      if (beatTimerRef.current !== null) window.clearInterval(beatTimerRef.current)
+      void audioRef.current?.close()
+    }
+  }, [])
 
   useEffect(() => {
     const hero = heroRef.current
@@ -56,10 +86,11 @@ function App() {
   }, [])
 
   return <main className="overflow-hidden bg-zinc-950 text-stone-100 selection:bg-lime-300 selection:text-black">
+    {celebrating && <Confetti />}
     <header className="absolute z-30 flex h-16 w-full items-center justify-between border-b border-white/20 px-[5vw] md:h-20">
       <a href="#inicio" className="font-display text-2xl tracking-[-.12em]">B<span className="text-lime-300">/</span>23</a>
       <button onClick={() => setMenu(!menu)} className="font-mono text-[10px] tracking-[.2em] md:hidden">{menu ? 'CERRAR' : 'MENÚ'}</button>
-      <nav className={`${menu ? 'flex' : 'hidden'} absolute left-0 top-16 w-full flex-col gap-6 bg-zinc-950 p-6 font-mono text-[10px] tracking-[.2em] md:static md:flex md:w-auto md:flex-row md:bg-transparent md:p-0`}><a href="#info">INFO</a><a href="#rsvp">RSVP</a></nav>
+      <nav className={`${menu ? 'flex' : 'hidden'} absolute left-0 top-16 w-full flex-col gap-6 bg-zinc-950 p-6 font-mono text-[10px] tracking-[.2em] md:static md:flex md:w-auto md:flex-row md:items-center md:bg-transparent md:p-0`}><a href="#info">INFO</a><a href="#rsvp">RSVP</a></nav>
     </header>
     <section ref={heroRef} id="inicio" className="hero-bg relative isolate flex min-h-[780px] flex-col justify-between px-[5vw] pb-14 pt-28 md:min-h-screen md:pb-16 md:pt-32">
       <div className="noise pointer-events-none absolute inset-0 -z-10 opacity-25" /><div className="pulse-orb absolute left-1/2 top-[30%] -z-10 size-[90vw] -translate-x-1/2 rounded-full md:top-[17%] md:size-[42vw]" />
@@ -78,5 +109,57 @@ function App() {
     <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-white/15 px-[5vw] py-9 font-mono text-[9px] tracking-widest"><a href="#inicio" className="font-display text-2xl">B<span className="text-lime-300">/</span>23</a><p>{party.date} · TUCUMÁN</p><p>HECHO PARA BAILAR</p></footer>
   </main>
 }
+
+function playTechnoBeat(context: AudioContext) {
+  const now = context.currentTime
+  const kick = context.createOscillator()
+  const kickGain = context.createGain()
+  kick.type = 'sine'
+  kick.frequency.setValueAtTime(145, now)
+  kick.frequency.exponentialRampToValueAtTime(48, now + .12)
+  kickGain.gain.setValueAtTime(.22, now)
+  kickGain.gain.exponentialRampToValueAtTime(.001, now + .22)
+  kick.connect(kickGain).connect(context.destination)
+  kick.start(now); kick.stop(now + .23)
+
+  const bass = context.createOscillator()
+  const bassGain = context.createGain()
+  bass.type = 'sawtooth'
+  bass.frequency.value = Math.floor(now) % 2 ? 55 : 65.41
+  bassGain.gain.setValueAtTime(.035, now + .08)
+  bassGain.gain.exponentialRampToValueAtTime(.001, now + .38)
+  bass.connect(bassGain).connect(context.destination)
+  bass.start(now + .08); bass.stop(now + .4)
+
+  const buffer = context.createBuffer(1, Math.floor(context.sampleRate * .035), context.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1
+  const hat = context.createBufferSource()
+  const hatGain = context.createGain()
+  hat.buffer = buffer
+  hatGain.gain.setValueAtTime(.025, now + .25)
+  hatGain.gain.exponentialRampToValueAtTime(.001, now + .3)
+  hat.connect(hatGain).connect(context.destination)
+  hat.start(now + .25)
+}
+
+function Confetti() {
+  const colors = ['#c7ff1a', '#862dff', '#ffffff', '#ff3bd4']
+  return <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden" aria-hidden="true">{Array.from({ length: 54 }, (_, index) => {
+    const style = {
+      left: `${(index * 37) % 100}%`,
+      top: '-3vh',
+      width: `${6 + (index % 4) * 2}px`,
+      height: `${10 + (index % 3) * 4}px`,
+      backgroundColor: colors[index % colors.length],
+      '--duration': `${2.2 + (index % 7) * .18}s`,
+      '--delay': `${(index % 9) * .04}s`,
+      '--drift': `${-90 + (index * 43) % 180}px`,
+      '--spin': `${360 + (index % 5) * 180}deg`,
+    } as CSSProperties
+    return <i key={index} className="confetti-piece absolute block" style={style} />
+  })}</div>
+}
+
 function Field({ label, children }: { label: string, children: ReactNode }) { return <label className="label block border-b border-white/20 py-6">{label}<div className="form-control mt-3">{children}</div></label> }
 export default App
